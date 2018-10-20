@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Firebase Storage</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/5.4.1/firebase.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/5.4.1/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/5.4.1/firebase-auth.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/5.4.1/firebase-storage.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/5.4.1/firebase-database.js"></script>
+        <script src="https://cdn.firebase.com/libs/firebaseui/3.1.1/firebaseui.js"></script>
+        <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/3.1.1/firebaseui.css" />
+        <link type="text/css" rel="stylesheet" href="style.css" />
+        <script>
+            var config = {
+                apiKey: "AIzaSyCc0QFnu1kKcxlB5tZUPdo7uopwFXaYJEk",
+                authDomain: "exploration-1f19b.firebaseapp.com",
+                databaseURL: "https://exploration-1f19b.firebaseio.com",
+                projectId: "exploration-1f19b",
+                storageBucket: "exploration-1f19b.appspot.com",
+                messagingSenderId: "474110846874"
+            };
+            firebase.initializeApp(config);
+            firebase.auth().onAuthStateChanged(function(user) {
+                if(user){
+                    console.log('Logged in ' + user.displayName);
+                    var display = document.getElementById('display');
+                    display.innerHTML=('Welcome ' + user.displayName + '!');
+                } 
+                else {
+                    console.log('No user');
+                    var provider = new firebase.auth.GoogleAuthProvider();
+                    firebase.auth().signInWithPopup(provider);
+                }
+            });           
+            var storageRef = firebase.storage().ref();
+            
+            function uploadFile() {
+                var file = $('#select').get(0).files[0];
+                if(file == null){
+                    console.log('No file chosen.');
+                    return;
+                }
+                var name = (+new Date()) + '-' + file.name;
+                var metadata = {
+                    contentType: file.type
+                };
+
+                var uploadTask = storageRef.child('images/' + name).put(file, metadata);
+
+                uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, function(snapshot){
+                    var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    console.log('Upload is ' + progress + '% done.');
+                    switch(snapshot.state) {
+                        case firebase.storage.TaskState.PAUSED:
+                            console.log('Upload is paused.');
+                            break;
+                        case firebase.storage.TaskState.RUNNING:
+                            console.log('Upload is running.');
+                            break;
+                    }
+                }, function(error) {
+                    switch(error.code) {
+                        case 'storage/unauthorized':
+                            break;
+                        case 'storage/canceled':
+                            break;
+                        case 'storage/unknown':
+                            break;
+                    }
+                }, function() {
+                    uploadTask.snapshot.ref.getDownloadURL().then(function(downloadURL) {
+                        console.log(downloadURL);
+                        var postData = {
+                            url: downloadURL
+                        };
+                        var postKey = firebase.database().ref().child('posts').push().key;
+                        var updates = {};
+                        updates['/posts/' + postKey] = postData;
+                        firebase.database().ref().update(updates);
+                    });
+                });
+            }
+        </script>
+    </head>
+    <body>
+        <h2 id="display" class="textCSS"></h2>
+        <p class="textCSS">The front end may not look like much, but all the cool stuff happens behind the scenes...</p>
+        <input type="file" id="select" accept="image/*">
+        <button type="submit" class="btn button button1" onclick="uploadFile()">Upload</button>
+        <button type="button" class ="btn button button1" onclick="location.href='/firebase/gallery.html'">Gallery</button>
+        <div id="images">
+        </div>
+    </body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Firebase Login</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/5.4.1/firebase.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/5.4.1/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/5.4.1/firebase-auth.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/5.4.1/firebase-storage.js"></script>
+        <script src="https://cdn.firebase.com/libs/firebaseui/3.1.1/firebaseui.js"></script>
+        <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/3.1.1/firebaseui.css" />
+        <link type="text/css" rel="stylesheet" href="style.css">
+        <script>
+            var config = {
+                apiKey: "AIzaSyCc0QFnu1kKcxlB5tZUPdo7uopwFXaYJEk",
+                authDomain: "exploration-1f19b.firebaseapp.com",
+                databaseURL: "https://exploration-1f19b.firebaseio.com",
+                projectId: "exploration-1f19b",
+                storageBucket: "exploration-1f19b.appspot.com",
+                messagingSenderId: "474110846874"
+            };
+            firebase.initializeApp(config);
+            
+            var ui = new firebaseui.auth.AuthUI(firebase.auth());
+            firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
+            
+            var uiConfig = {
+                callbacks: {
+                    signInSuccessWithAuthResult: function(authResult, redirectUrl) {
+                        return true;
+                    },
+                    uiShown: function() {
+                    document.getElementById('loader').style.display = 'none';
+                    },
+                    signInFailure: function(error) {
+                        if(error.code != 'firebaseui/anonymous-upgrade-merge-conflict') {
+                            return Promise.resolve();
+                        }
+                        var cred = error.credential;
+                        return firebase.auth().signInWithCredential(cred);
+                    }
+                },
+                signInFlow: 'popup',
+                signInSuccessUrl: 'upload.html',
+                signInOptions: [
+                    firebase.auth.GoogleAuthProvider.PROVIDER_ID
+                ]
+//                tosUrl: '',
+//                privacyPolicyUrl: ''
+            };
+            
+            ui.start('#firebaseui-auth-container', uiConfig);
+        </script>
+    </head>
+    <body>
+        <h2 class="textCSS">Welcome to my Firebase page!</h2>
+        <p class="textCSS">Please sign in and you will be redirected to my image gallery app.</p>
+        <div id="firebaseui-auth-container"></div>
+        <div id="loader">
+            <div class="bounce1"></div>
+            <div class="bounce2"></div>
+            <div class="bounce3"></div>
+        </div>
+    </body>
+</html>
